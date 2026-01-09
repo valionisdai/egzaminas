@@ -34,6 +34,7 @@ int main() {
     
     while(getline(rd, line))
     {
+        eilnr++;
         istringstream iss(line);
         while (iss >> zodis)
         {
@@ -41,6 +42,8 @@ int main() {
             if (zodis.empty()) continue;
             auto & info = p_zodziai[zodis];
             info.kiekis++;
+            if (info.eilutes.empty() || info.eilutes.back() != eilnr)
+                info.eilutes.push_back(eilnr);
         }
     }
 
@@ -50,7 +53,12 @@ int main() {
 
     for (auto& i : p_zodziai) {
         if (i.second.kiekis > 1) 
-            wr << left << setw(25) << i.first << setw(8) << i.second.kiekis << endl;
+        {
+            wr << left << setw(25) << i.first << setw(8) << i.second.kiekis;
+            for (auto eil : i.second.eilutes)
+                wr << eil << " ";
+            wr << endl;
+        }
     }
     return 0;
 }
