@@ -7,8 +7,6 @@
 #include <cctype>
 #include <algorithm>
 
-
-
 using namespace std;
 
 class zodzio_info {
