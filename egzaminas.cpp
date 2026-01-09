@@ -6,6 +6,9 @@
 #include <iomanip>
 #include <cctype>
 #include <algorithm>
+#include <regex>
+#include <unordered_set>
+
 
 using namespace std;
 
@@ -20,11 +23,25 @@ string valymas (string zodis);
 int main() {
 
     unordered_map<string, zodzio_info> p_zodziai;
-  
+    vector<string> urls;
+
+    regex urlreg(R"((https?:\/\/)?(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,})");
+
     ifstream rd("tekstas.txt");
     string word, rez;
     if (!rd.is_open()) {
         cerr << "Nepavyko atidaryti failo!" << endl;
+    }
+
+    // TLDu skaitymas is failo 
+    unordered_set<string> ttld;
+    
+    ifstream tf("url.txt");
+    string t;
+    while (tf >> t)
+    {
+        transform(t.begin(), t.end(), t.begin(), ::tolower);
+        ttld.insert(t);
     }
 
     string line, zodis;
@@ -33,6 +50,42 @@ int main() {
     while(getline(rd, line))
     {
         eilnr++;
+        string temp = line;
+        smatch match;
+        vector<pair<size_t, size_t>> urltask;
+        while(regex_search(temp, match, urlreg))
+        {
+            string url = match.str();
+            bool tikras_url = false;
+            size_t pos = url.find_last_of('.');
+            if (pos != string::npos)
+            {
+                string tld = url.substr(pos + 1);
+                transform(tld.begin(), tld.end(), tld.begin(), ::tolower);
+                if (ttld.count(tld))
+                {
+                    tikras_url = true;
+                    urls.push_back(url);
+                }
+            }
+            if (tikras_url)
+            {
+                size_t start = match.position() + (line.length() - temp.length());
+                size_t end = start + match.length();
+                urltask.push_back({ start, end });
+            }
+
+            temp = match.suffix().str();
+        }
+
+        for(auto it = urltask.rbegin(); it != urltask.rend(); ++it) {
+            line.replace(it->first, it->second - it->first, " ");
+        }
+
+        line = regex_replace(line, regex(R"(\s+)"), " ");
+        
+        if (all_of(line.begin(), line.end(), [](unsigned char c){ return isspace(c); })) continue;
+
         istringstream iss(line);
         while (iss >> zodis)
         {
@@ -58,6 +111,12 @@ int main() {
             wr << endl;
         }
     }
+
+
+    ofstream urlwr("nuorodos.txt");
+    for (const auto& url : urls)
+        urlwr << url << endl;
+
     return 0;
 }
 
